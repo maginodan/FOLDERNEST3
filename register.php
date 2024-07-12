@@ -9,7 +9,6 @@
         die();
     }
 
-    
     require 'vendor/autoload.php';
     include 'connection/config.php';
     $msg = "";
@@ -84,6 +83,7 @@
     <link href="//fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
     <script src="https://kit.fontawesome.com/af562a2a63.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="fontawesome/css/all.min.css">
 </head>
 <body>
     <section class="w3l-mockup-form">
@@ -91,7 +91,7 @@
             <div class="workinghny-form-grid">
                 <div class="main-mockup">
                     <div class="alert-close">
-                        <span class="fa fa-close"></span>
+                        <span class="fas fa-times rounded-circle"></span>
                     </div>
                     <div class="w3l_form align-self">
                         <div class="left_grid_info">
