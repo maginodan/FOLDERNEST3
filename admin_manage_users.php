@@ -1,38 +1,20 @@
 <?php
-    session_start();
-    if (!isset($_SESSION['SESSION_EMAIL'])) {
-        header("Location: login.php");
-        die();
-    }
+session_start();
+include 'connection/config.php';
 
-    // Assuming role check has already been done in index.php
-    // If this page is directly accessed, ensure role is admin
-    if ($_SESSION['SESSION_ROLE'] !== 'admin') {
-        header("Location: index.php"); // Redirect to index if not admin
-        die();
-    }
+if (!isset($_SESSION['SESSION_EMAIL'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    // Include necessary files and configurations
-    include 'connection/config.php';
+if ($_SESSION['SESSION_ROLE'] !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
 
-    // Retrieve user data based on session email
-    $query = mysqli_query($conn, "SELECT * FROM users WHERE email='{$_SESSION['SESSION_EMAIL']}'");
-
-    if (mysqli_num_rows($query) > 0) {
-        $row = mysqli_fetch_assoc($query);
-        $name = $row['name'];
-    } else {
-        // Handle case where user data is not found (although this should not happen if user is logged in)
-        header("Location: login.php");
-        die();
-    }
+// Fetch all users
+$users_query = mysqli_query($conn, "SELECT * FROM users");
 ?>
-
-
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -40,11 +22,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users</title>
-    <!-- Bootstrap CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
-    <!-- Font Awesome -->
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
     <link rel="stylesheet" href="fontawesome/css/all.min.css">
     <style>
         body {
@@ -172,29 +150,21 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>John Doe</td>
-                                <td>john.doe@example.com</td>
-                                <td>Admin</td>
-                                <td>
-                                    <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> View</a>
-                                    <a href="#" class="btn btn-info btn-sm"><i class="fas fa-edit"></i> Edit</a>
-                                    <a href="#" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>Jane Smith</td>
-                                <td>jane.smith@example.com</td>
-                                <td>User</td>
-                                <td>
-                                    <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> View</a>
-                                    <a href="#" class="btn btn-info btn-sm"><i class="fas fa-edit"></i> Edit</a>
-                                    <a href="#" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Delete</a>
-                                </td>
-                            </tr>
-                            <!-- Add more rows dynamically as needed -->
+                            <?php
+                            while ($user = mysqli_fetch_assoc($users_query)) {
+                                echo "<tr>";
+                                echo "<td>{$user['id']}</td>";
+                                echo "<td>{$user['name']}</td>";
+                                echo "<td>{$user['email']}</td>";
+                                echo "<td>{$user['role']}</td>";
+                                echo "<td>
+                                    <a href='#viewUserModal' class='btn btn-primary btn-sm view-user' data-bs-toggle='modal' data-bs-userid='{$user['id']}'><i class='fas fa-eye'></i> View</a>
+                                    <a href='#editUserModal' class='btn btn-info btn-sm edit-user' data-bs-toggle='modal' data-bs-userid='{$user['id']}'><i class='fas fa-edit'></i> Edit</a>
+                                    <a href='admin_delete_user.php?id={$user['id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"Are you sure you want to delete this user?\");'><i class='fas fa-trash'></i> Delete</a>
+                                  </td>";
+                                echo "</tr>";
+                            }
+                            ?>
                         </tbody>
                     </table>
                 </div>
@@ -212,7 +182,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Form for adding a new user -->
-                    <form>
+                    <form action="add_user.php" method="POST">
                         <div class="mb-3">
                             <label for="userName" class="form-label">Name</label>
                             <input type="text" class="form-control" id="userName" name="userName" required>
@@ -224,9 +194,13 @@
                         <div class="mb-3">
                             <label for="userRole" class="form-label">Role</label>
                             <select class="form-select" id="userRole" name="userRole" required>
-                                <option value="Admin">Admin</option>
-                                <option value="User">User</option>
+                                <option value="admin">Admin</option>
+                                <option value="user">User</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="userPassword" name="userPassword" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Add User</button>
                     </form>
@@ -235,10 +209,66 @@
         </div>
     </div>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    <!-- View User Modal -->
+    <div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewUserModalLabel">View User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- View user details will be loaded dynamically using Ajax -->
+                    <div id="viewUserDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Edit user form will be loaded dynamically using Ajax -->
+                    <div id="editUserForm"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/bootstrap.bundle.min.js"></script>
-    <!-- Font Awesome -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        // Ajax request to load user details in the view user modal
+        $(document).on("click", ".view-user", function () {
+            var userId = $(this).data('bs-userid');
+            $.ajax({
+                url: 'admin_view_user.php',
+                type: 'GET',
+                data: { id: userId },
+                success: function(response) {
+                    $('#viewUserDetails').html(response);
+                }
+            });
+        });
+
+        // Ajax request to load edit user form in the edit user modal
+        $(document).on("click", ".edit-user", function () {
+            var userId = $(this).data('bs-userid');
+            $.ajax({
+                url: 'admin_edit_user.php',
+                type: 'GET',
+                data: { id: userId },
+                success: function(response) {
+                    $('#editUserForm').html(response);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

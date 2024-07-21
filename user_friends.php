@@ -68,11 +68,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Dashboard</title>
+    <title>Friends</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- local files -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -83,6 +80,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
         .content {
             margin-left: 250px;
             padding: 20px;
+            margin-top: auto;
+            
+        }
+
+        .content h1{
+            color: #5ce1e6;
         }
         .card {
             margin-bottom: 20px;
@@ -90,7 +93,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .card-header {
+        .card .card-header {
             background-color: #48d1cc;
             color: #fff;
             border-radius: 10px 10px 0 0;
@@ -107,13 +110,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </style>
 </head>
 <body>
+<!-- nav bar -->
+<?php include 'navbar.php'; ?>    
 
 <!-- Sidebar -->
 <?php include('user_sidebar.php'); ?>
 
 <!-- Page Content -->
 <div class="content">
-    <h1>Welcome to the System Dashboard, <?php echo $admin_name; ?></h1>
+    <h1>friends</h1>
 
     <!-- Send Friend Request Form -->
     <div class="card">

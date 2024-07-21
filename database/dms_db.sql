@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 08, 2024 at 05:09 PM
+-- Generation Time: Jul 17, 2024 at 07:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,16 +48,28 @@ CREATE TABLE `activity_log` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `document`
+-- Table structure for table `documents`
 --
 
-CREATE TABLE `document` (
+CREATE TABLE `documents` (
   `document_id` int(11) NOT NULL,
-  `title` varchar(20) NOT NULL DEFAULT 'New_document',
-  `uploaded_by` int(11) NOT NULL,
-  `uploaded_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `is_deleted` tinyint(1) NOT NULL DEFAULT 0
+  `folder_id` int(11) DEFAULT NULL,
+  `document_name` varchar(255) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `file_size` int(11) NOT NULL,
+  `created_by_name` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `modified_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_deleted` tinyint(4) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `documents`
+--
+
+INSERT INTO `documents` (`document_id`, `folder_id`, `document_name`, `file_path`, `file_size`, `created_by_name`, `created_at`, `modified_at`, `is_deleted`) VALUES
+(1, 1, 'FN.png', 'uploads/FN.png', 18576, 'magino', '2024-07-15 00:13:03', '2024-07-15 00:13:03', 0),
+(2, 2, 'FN.png', 'uploads/FN.png', 18576, 'magino', '2024-07-15 00:13:18', '2024-07-15 00:13:18', 0);
 
 -- --------------------------------------------------------
 
@@ -67,13 +79,21 @@ CREATE TABLE `document` (
 
 CREATE TABLE `folder` (
   `folder_id` int(11) NOT NULL,
-  `folder_name` varchar(20) NOT NULL DEFAULT 'New_folder',
-  `document_id` int(11) NOT NULL,
-  `created_by` int(11) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `modified_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `is_deleted` tinyint(1) NOT NULL DEFAULT 0
+  `folder_name` varchar(255) NOT NULL,
+  `created_by_name` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `modified_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_deleted` tinyint(4) DEFAULT 0,
+  `folder_size` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `folder`
+--
+
+INSERT INTO `folder` (`folder_id`, `folder_name`, `created_by_name`, `created_at`, `modified_at`, `is_deleted`, `folder_size`) VALUES
+(1, 'folder2', 'magino', '2024-07-15 00:12:44', '2024-07-15 00:13:03', 0, 18576),
+(2, 'folder 6', 'magino', '2024-07-15 00:12:49', '2024-07-15 00:13:18', 0, 18576);
 
 -- --------------------------------------------------------
 
@@ -110,15 +130,17 @@ CREATE TABLE `users` (
   `email` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `code` text NOT NULL,
-  `role` varchar(10) NOT NULL DEFAULT 'user'
+  `role` varchar(10) NOT NULL DEFAULT 'user',
+  `is_verified` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `code`, `role`) VALUES
-(3, 'magino', 'maginodan@gmail.com', '827ccb0eea8a706c4c34a16891f84e7b', '', 'user');
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `code`, `role`, `is_verified`) VALUES
+(17, 'MAGINO', 'danmagino64@gmail.com', '$2y$10$w2SE3wn4C5ecTFO24Yzp6OmKbHWis8.OqM878.N4gZjcH9AmBY9L.', '', 'admin', 1),
+(18, 'jonn', 'maginodan5@gmail.com', '$2y$10$miAtTQgpF1fRPWsP0InBDeHpeYKBvhGM8FlDc9HdrvnH9vQkvTvv2', '', 'user', 1);
 
 --
 -- Indexes for dumped tables
@@ -139,19 +161,16 @@ ALTER TABLE `activity_log`
   ADD KEY `action_id` (`action_id`);
 
 --
--- Indexes for table `document`
+-- Indexes for table `documents`
 --
-ALTER TABLE `document`
-  ADD PRIMARY KEY (`document_id`),
-  ADD KEY `created_by` (`uploaded_by`);
+ALTER TABLE `documents`
+  ADD PRIMARY KEY (`document_id`);
 
 --
 -- Indexes for table `folder`
 --
 ALTER TABLE `folder`
-  ADD PRIMARY KEY (`folder_id`),
-  ADD KEY `document_id` (`document_id`),
-  ADD KEY `created_by` (`created_by`);
+  ADD PRIMARY KEY (`folder_id`);
 
 --
 -- Indexes for table `permission`
@@ -190,16 +209,16 @@ ALTER TABLE `activity_log`
   MODIFY `activity_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `document`
+-- AUTO_INCREMENT for table `documents`
 --
-ALTER TABLE `document`
-  MODIFY `document_id` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `documents`
+  MODIFY `document_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `folder`
 --
 ALTER TABLE `folder`
-  MODIFY `folder_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `folder_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `permission`
@@ -217,7 +236,7 @@ ALTER TABLE `role`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Constraints for dumped tables
@@ -229,19 +248,6 @@ ALTER TABLE `users`
 ALTER TABLE `activity_log`
   ADD CONSTRAINT `activity_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`),
   ADD CONSTRAINT `activity_log_ibfk_2` FOREIGN KEY (`action_id`) REFERENCES `action` (`action_id`);
-
---
--- Constraints for table `document`
---
-ALTER TABLE `document`
-  ADD CONSTRAINT `document_ibfk_1` FOREIGN KEY (`uploaded_by`) REFERENCES `user` (`user_id`);
-
---
--- Constraints for table `folder`
---
-ALTER TABLE `folder`
-  ADD CONSTRAINT `folder_ibfk_1` FOREIGN KEY (`document_id`) REFERENCES `document` (`document_id`),
-  ADD CONSTRAINT `folder_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `user` (`user_id`);
 
 --
 -- Constraints for table `permission`

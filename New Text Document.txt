@@ -51,10 +51,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
         .content {
             padding: 20px;
         }
-
-        .content h1{
-            color: #5ce1e6;
-        }
         .card {
             margin-bottom: 20px;
             border: none;
@@ -97,8 +93,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </style>
 </head>
 <body>
-
-<?php include 'navbar.php'; ?>
 
 <!-- Sidebar -->
 <?php include('user_sidebar.php'); ?>

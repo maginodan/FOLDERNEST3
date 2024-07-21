@@ -1,85 +1,87 @@
 <?php
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\SMTP;
-    use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
-    session_start();
-    if (isset($_SESSION['SESSION_EMAIL'])) {
-        header("Location: index.php");
-        die();
-    }
+session_start();
+if (isset($_SESSION['SESSION_EMAIL'])) {
+    header("Location: index.php");
+    die();
+}
 
-    require 'vendor/autoload.php';
-    include 'connection/config.php';
-    $msg = "";
+require 'vendor/autoload.php';
+include 'connection/config.php';
+$msg = "";
 
-    if (isset($_POST['submit'])) {
-        $name = mysqli_real_escape_string($conn, $_POST['name']);
-        $email = mysqli_real_escape_string($conn, $_POST['email']);
-        $password = mysqli_real_escape_string($conn, md5($_POST['password']));
-        $confirm_password = mysqli_real_escape_string($conn, md5($_POST['confirm-password']));
-        $code = mysqli_real_escape_string($conn, md5(rand()));
+if (isset($_POST['submit'])) {
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $confirm_password = mysqli_real_escape_string($conn, $_POST['confirm-password']);
+    $code = md5(rand()); // Generate verification code
+    
+    // Validate password match
+    if ($password !== $confirm_password) {
+        $msg = "<div class='alert alert-danger'>Passwords do not match.</div>";
+    } else {
+        // Check if email already exists
+        $sql_check_email = "SELECT * FROM users WHERE email='{$email}'";
+        $result_check_email = mysqli_query($conn, $sql_check_email);
         
-        // Add a new variable to store the user role
-        $role = 'user';
-
-        // Ensure the first registered user is an admin
-        $existing_users = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users"));
-        if ($existing_users == 0) {
-            $role = 'admin';
-        }
-
-        if (mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users WHERE email='{$email}'")) > 0) {
-            $msg = "<div class='alert alert-danger'>{$email} - This email address already exists.</div>";
+        if (mysqli_num_rows($result_check_email) > 0) {
+            $msg = "<div class='alert alert-danger'>Email already exists.</div>";
         } else {
-            if ($password === $confirm_password) {
-                $sql = "INSERT INTO users (name, email, password, code, role) VALUES ('{$name}', '{$email}', '{$password}', '{$code}', '{$role}')";
-                $result = mysqli_query($conn, $sql);
+            // Hash password
+            $password_hashed = password_hash($password, PASSWORD_BCRYPT);
+            
+            // Insert user into database with unverified status
+            $sql_insert_user = "INSERT INTO users (name, email, password, code, role, is_verified)
+                                VALUES ('$name', '$email', '$password_hashed', '$code', 'user', 0)";
+            $result_insert_user = mysqli_query($conn, $sql_insert_user);
+            
+            if ($result_insert_user) {
+                // Send verification email
+                $mail = new PHPMailer(true);
 
-                if ($result) {
-                    echo "<div style='display: none;'>";
-                    $mail = new PHPMailer(true);
+                try {
+                    // SMTP settings
+                    $mail->SMTPDebug = SMTP::DEBUG_OFF;
+                    $mail->isSMTP();
+                    $mail->Host       = 'smtp.gmail.com';
+                    $mail->SMTPAuth   = true;
+                    $mail->Username   = 'danmagino64@gmail.com'; // Your Gmail email
+                    $mail->Password   = 'xzcy zjns exzn bajh';        // Your Gmail password
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port       = 587;
+                    
+                    // Sender and recipient
+                    $mail->setFrom('danmagino64@gmail.com', 'Folder Nest');
+                    $mail->addAddress($email, $name);  // Add a recipient
 
-                    try {
-                        $mail->SMTPDebug = SMTP::DEBUG_SERVER;
-                        $mail->isSMTP();
-                        $mail->Host       = 'smtp.gmail.com';
-                        $mail->SMTPAuth   = true;
-                        $mail->Username   = 'danmagino64@gmail.com';
-                        $mail->Password   = 'xzcy zjns exzn bajh';
-                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                        $mail->Port       = 465;
-
-                        $mail->setFrom('danmagino64@gmail.com', 'FOLDERNEST.COM');
-                        $mail->addAddress($email);
-
-                        $mail->isHTML(true);
-                        $mail->Subject = 'no reply';
-                        $mail->Body = 'Here is the verification link <b><a href="http://localhost/FOLDERNEST3/login.php?verification='.$code.'">http://localhost/FOLDERNEST3/login.php?verification='.$code.'</a></b>';
-                        
-                        $mail->send();
-                        echo 'Message has been sent';
-                    } catch (Exception $e) {
-                        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-                    }
-                    echo "</div>";
-                    $msg = "<div class='alert alert-info'>We've sent a verification link on your email address.</div>";
-                } else {
-                    $msg = "<div class='alert alert-danger'>Something went wrong.</div>";
+                    // Email content
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Account Verification';
+                    $mail->Body    = "Hi $name,<br><br>Thank you for registering with Folder Nest. Please click the following link to verify your account: <br><br><a href='http://localhost/FOLDERNEST3/login.php?verification=$code'>Verify Account</a>";
+                    
+                    $mail->send();
+                    $msg = "<div class='alert alert-success'>Registration successful. Please check your email to verify your account.</div>";
+                } catch (Exception $e) {
+                    $msg = "<div class='alert alert-danger'>Message could not be sent. Mailer Error: {$mail->ErrorInfo}</div>";
                 }
             } else {
-                $msg = "<div class='alert alert-danger'>Password and Confirm Password do not match</div>";
+                $msg = "<div class='alert alert-danger'>Error: Could not register user.</div>";
             }
         }
     }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>FOLDER NEST</title>
+    <title>Register - FOLDER NEST</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8" />
-    <meta name="keywords" content="Login Form" />
+    <meta name="keywords" content="Registration Form" />
     <link href="//fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
     <script src="https://kit.fontawesome.com/af562a2a63.js" crossorigin="anonymous"></script>
@@ -109,8 +111,8 @@
                         <p>Register Now</p>
                         <?php echo $msg; ?>
                         <form action="" method="post">
-                            <input type="text" class="name" name="name" placeholder="Enter Your Name" value="<?php if (isset($_POST['submit'])) { echo $name; } ?>" required>
-                            <input type="email" class="email" name="email" placeholder="Enter Your Email" value="<?php if (isset($_POST['submit'])) { echo $email; } ?>" required>
+                            <input type="text" class="name" name="name" placeholder="Enter Your Name" value="<?php if (isset($_POST['submit'])) { echo htmlspecialchars($name); } ?>" required>
+                            <input type="email" class="email" name="email" placeholder="Enter Your Email" value="<?php if (isset($_POST['submit'])) { echo htmlspecialchars($email); } ?>" required>
                             <input type="password" class="password" name="password" placeholder="Enter Your Password" required>
                             <input type="password" class="confirm-password" name="confirm-password" placeholder="Enter Your Confirm Password" required>
                             <button name="submit" class="btn" type="submit">Register</button>

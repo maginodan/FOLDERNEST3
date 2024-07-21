@@ -8,7 +8,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="sidebar">
     <div class="text-center mb-4">
-    <img src="images/logo3.png" alt="Company Logo" class="img-fluid rounded-circle" style="max-width: 50px; filter: brightness(97%); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+    <img src="images/avatar.jpg" alt="Company Logo" class="img-fluid rounded-circle" style="max-width: 60px; filter: brightness(97%); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
 
     </div>
     <h3 class="text-center">Admin Panel</h3>
