@@ -1,46 +1,55 @@
 <?php
-    session_start();
-    if (isset($_SESSION['SESSION_EMAIL'])) {
-        header("Location: index.php");
-        die();
-    }
+session_start();
+if (isset($_SESSION['SESSION_EMAIL'])) {
+    header("Location: index.php");
+    die();
+}
 
-    include 'connection/config.php';
-    $msg = "";
+include 'connection/config.php';
+$msg = "";
 
-    if (isset($_GET['verification'])) {
-        if (mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users WHERE code='{$_GET['verification']}'")) > 0) {
-            $query = mysqli_query($conn, "UPDATE users SET code='' WHERE code='{$_GET['verification']}'");
-            
-            if ($query) {
-                $msg = "<div class='alert alert-success'>Account verification has been successfully completed.</div>";
-            }
-        } else {
-            header("Location: login.php");
+if (isset($_GET['verification'])) {
+    if (mysqli_num_rows(mysqli_query($conn, "SELECT * FROM users WHERE code='{$_GET['verification']}'")) > 0) {
+        $query = mysqli_query($conn, "UPDATE users SET code='', is_verified=1 WHERE code='{$_GET['verification']}'");
+
+        if ($query) {
+            $msg = "<div class='alert alert-success'>Account verification has been successfully completed.</div>";
         }
+    } else {
+        header("Location: login.php");
     }
+}
 
-    if (isset($_POST['submit'])) {
-        $email = mysqli_real_escape_string($conn, $_POST['email']);
-        $password = mysqli_real_escape_string($conn, md5($_POST['password']));
+if (isset($_POST['submit'])) {
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
 
-        $sql = "SELECT * FROM users WHERE email='{$email}' AND password='{$password}'";
-        $result = mysqli_query($conn, $sql);
+    $sql = "SELECT * FROM users WHERE email='$email'";
+    $result = mysqli_query($conn, $sql);
 
-        if (mysqli_num_rows($result) === 1) {
-            $row = mysqli_fetch_assoc($result);
+    if (mysqli_num_rows($result) === 1) {
+        $row = mysqli_fetch_assoc($result);
 
-            if (empty($row['code'])) {
+        if (password_verify($password, $row['password'])) {
+            if ($row['is_verified'] == 1) {
                 $_SESSION['SESSION_EMAIL'] = $email;
                 $_SESSION['SESSION_ROLE'] = $row['role']; // Store the role in the session
-                header("Location: index.php");
+                if ($row['role'] == 'admin') {
+                    header("Location: admin_dashboard.php");
+                } else {
+                    header("Location: user_dashboard.php");
+                }
+                die();
             } else {
                 $msg = "<div class='alert alert-info'>First verify your account and try again.</div>";
             }
         } else {
             $msg = "<div class='alert alert-danger'>Email or password do not match.</div>";
         }
+    } else {
+        $msg = "<div class='alert alert-danger'>No account found with that email.</div>";
     }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,7 +80,7 @@
                     </div>
                     <div class="content-wthree">
                         <div class="logo">
-                            <a href="login.php" class="app-brand-link gap-2">
+                            <a href="#" class="app-brand-link gap-2">
                                 <img src="images/logo3.png" alt="Your Logo Alt Text" class="app-brand-logo">
                                 <span class="app-brand-text">Folder Nest</span>
                                 <p>"At your service" </p>

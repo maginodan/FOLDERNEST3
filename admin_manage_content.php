@@ -126,7 +126,9 @@
     </style>
 </head>
 <body>
+    
     <?php include('admin_sidebar.php'); ?>
+
     <div class="content">
         <h1>Manage Documents</h1>
         <button class="btn btn-add"><i class="fas fa-plus"></i> Add Document</button>
